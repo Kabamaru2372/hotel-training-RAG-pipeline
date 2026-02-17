@@ -1,0 +1,7 @@
+# requirements.txt
+fastapi
+uvicorn
+chromadb
+openai
+azure-storage-blob
+python-multipart
