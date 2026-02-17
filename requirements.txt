@@ -2,6 +2,7 @@
 fastapi
 uvicorn
 chromadb
-openai
+azure-ai-inference
+azure-core
 azure-storage-blob
 python-multipart
