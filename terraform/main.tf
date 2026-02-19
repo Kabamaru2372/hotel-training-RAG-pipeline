@@ -48,3 +48,20 @@ resource "azurerm_cognitive_account" "openai" {
   kind                = "OpenAI"
   sku_name            = "S0"
 }
+
+resource "azurerm_cognitive_account" "ai_foundry" {
+  name                = "hotel-ai-foundry"
+  resource_group_name = azurerm_resource_group.rg_rag_pipeline.name
+  location            = azurerm_resource_group.rg_rag_pipeline.location
+  kind                = "AIServices"
+  sku_name            = "S0"
+}
+
+output "azure_foundry_endpoint" {
+  value = azurerm_cognitive_account.ai_foundry.endpoint
+}
+
+output "azure_foundry_key" {
+  value     = azurerm_cognitive_account.ai_foundry.primary_access_key
+  sensitive = true
+}
