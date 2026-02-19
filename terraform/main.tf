@@ -31,6 +31,15 @@ resource "azurerm_storage_container" "uploads" {
   storage_account_id = azurerm_storage_account.main.id
 }
 
+output "storage_account_name" {
+  value = azurerm_storage_account.main.name
+}
+
+output "storage_account_key" {
+  value     = azurerm_storage_account.main.primary_access_key
+  sensitive = true
+}
+
 resource "azurerm_cognitive_account" "openai" {
   name                = "hotel-openai"
   resource_group_name = azurerm_resource_group.rg_rag_pipeline.name

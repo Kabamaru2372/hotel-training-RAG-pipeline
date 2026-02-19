@@ -1,6 +1,4 @@
-# app.py
 import os
-import json
 from fastapi import FastAPI, UploadFile, Request
 from azure.ai.inference import ChatCompletionsClient, EmbeddingsClient
 from azure.ai.inference.models import SystemMessage, UserMessage
