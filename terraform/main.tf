@@ -2,7 +2,7 @@ terraform {
    required_providers {
      azurerm = {
        source  = "hashicorp/azurerm"
-       version = "~> 3.0"
+       version = "~> 4.0"
      }
    }
    required_version = ">= 1.1.0"
@@ -10,6 +10,7 @@ terraform {
 
  provider "azurerm" {
    features {}
+   resource_provider_registrations = "none"
  }
 
  # Create a Resource Group
@@ -19,7 +20,7 @@ terraform {
  }
 
 resource "azurerm_storage_account" "main" {
-  name                     = "hotel-training-storage"
+  name                     = "hoteltrainingstorage"
   resource_group_name      = azurerm_resource_group.rg_rag_pipeline.name
   location                 = azurerm_resource_group.rg_rag_pipeline.location
   account_tier             = "Standard"

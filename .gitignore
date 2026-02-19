@@ -1,5 +1,8 @@
 .env
 .venv
 
-.terraform*
 .DS_Store
+
+# Terraform
+.terraform*
+terraform*
