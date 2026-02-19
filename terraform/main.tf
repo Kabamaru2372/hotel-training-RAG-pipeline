@@ -27,8 +27,8 @@ resource "azurerm_storage_account" "main" {
 }
 
 resource "azurerm_storage_container" "uploads" {
-  name                 = "hotel-data"
-  storage_account_name = azurerm_storage_account.rg_rag_pipeline.name
+  name               = "hotel-data"
+  storage_account_id = azurerm_storage_account.main.id
 }
 
 resource "azurerm_cognitive_account" "openai" {
