@@ -1,8 +1,6 @@
 import os
 from fastapi import FastAPI, UploadFile, Request
-from azure.ai.inference import ChatCompletionsClient, EmbeddingsClient
-from azure.ai.inference.models import SystemMessage, UserMessage
-from azure.core.credentials import AzureKeyCredential
+from openai import AzureOpenAI
 import chromadb
 
 app = FastAPI()
@@ -11,14 +9,14 @@ app = FastAPI()
 chroma = chromadb.PersistentClient(path="./chroma")
 collection = chroma.get_or_create_collection("hotels")
 
-_endpoint = os.environ["AZURE_FOUNDRY_ENDPOINT"]
-_credential = AzureKeyCredential(os.environ["AZURE_FOUNDRY_KEY"])
-
-chat_client = ChatCompletionsClient(endpoint=_endpoint, credential=_credential)
-embeddings_client = EmbeddingsClient(endpoint=_endpoint, credential=_credential)
+client = AzureOpenAI(
+    azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+    api_key=os.environ["AZURE_OPENAI_KEY"],
+    api_version="2024-02-01",
+)
 
 def embed(text: str) -> list[float]:
-    return embeddings_client.embed(
+    return client.embeddings.create(
         input=[text], model="text-embedding-3-small"
     ).data[0].embedding
 
@@ -54,11 +52,11 @@ async def ask(req: Request):
     )
     context = "\n\n".join(results["documents"][0])
 
-    response = chat_client.complete(
+    response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            SystemMessage(content="Answer using only the hotel information provided. Be concise and factual."),
-            UserMessage(content=f"Context:\n{context}\n\nQuestion: {question}")
+            {"role": "system", "content": "Answer using only the hotel information provided. Be concise and factual."},
+            {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"}
         ]
     )
     return {"answer": response.choices[0].message.content}

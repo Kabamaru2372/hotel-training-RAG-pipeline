@@ -49,20 +49,13 @@ resource "azurerm_cognitive_account" "openai" {
   sku_name            = "S0"
 }
 
-resource "azurerm_cognitive_account" "ai_foundry" {
-  name                = "hotel-ai-foundry"
-  resource_group_name = azurerm_resource_group.rg_rag_pipeline.name
-  location            = azurerm_resource_group.rg_rag_pipeline.location
-  kind                = "AIServices"
-  sku_name            = "S0"
+
+output "azure_openai_endpoint" {
+  value = azurerm_cognitive_account.openai.endpoint
 }
 
-output "azure_foundry_endpoint" {
-  value = azurerm_cognitive_account.ai_foundry.endpoint
-}
-
-output "azure_foundry_key" {
-  value     = azurerm_cognitive_account.ai_foundry.primary_access_key
+output "azure_openai_key" {
+  value     = azurerm_cognitive_account.openai.primary_access_key
   sensitive = true
 }
 
@@ -76,4 +69,36 @@ resource "azurerm_container_registry" "acr" {
 
 output "acr_login_server" {
   value = azurerm_container_registry.acr.login_server
+}
+
+resource "azurerm_cognitive_deployment" "gpt4o" {
+  name                 = "gpt-4o"
+  cognitive_account_id = azurerm_cognitive_account.openai.id
+
+  model {
+    format  = "OpenAI"
+    name    = "gpt-4o"
+    version = "2024-11-20"
+  }
+
+  sku {
+    name     = "GlobalStandard"
+    capacity = 10
+  }
+}
+
+resource "azurerm_cognitive_deployment" "embedding" {
+  name                 = "text-embedding-3-small"
+  cognitive_account_id = azurerm_cognitive_account.openai.id
+
+  model {
+    format  = "OpenAI"
+    name    = "text-embedding-3-small"
+    version = "1"
+  }
+
+  sku {
+    name     = "GlobalStandard"
+    capacity = 10
+  }
 }

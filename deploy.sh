@@ -15,8 +15,8 @@ MOUNT_PATH="/app/chroma"
 FULL_IMAGE="${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}"
 
 # Validate required env vars
-: "${AZURE_FOUNDRY_ENDPOINT:?AZURE_FOUNDRY_ENDPOINT is not set}"
-: "${AZURE_FOUNDRY_KEY:?AZURE_FOUNDRY_KEY is not set}"
+: "${AZURE_OPENAI_ENDPOINT:?AZURE_OPENAI_ENDPOINT is not set}"
+: "${AZURE_OPENAI_KEY:?AZURE_OPENAI_KEY is not set}"
 
 echo "==> Logging in to ACR: ${ACR_NAME}"
 az acr login --name "${ACR_NAME}"
@@ -46,8 +46,8 @@ az container create \
   --registry-username "$(az acr credential show --name "${ACR_NAME}" --query username -o tsv)" \
   --registry-password "$(az acr credential show --name "${ACR_NAME}" --query passwords[0].value -o tsv)" \
   --environment-variables \
-    AZURE_FOUNDRY_ENDPOINT="${AZURE_FOUNDRY_ENDPOINT}" \
-    AZURE_FOUNDRY_KEY="${AZURE_FOUNDRY_KEY}" \
+    AZURE_OPENAI_ENDPOINT="${AZURE_OPENAI_ENDPOINT}" \
+    AZURE_OPENAI_KEY="${AZURE_OPENAI_KEY}" \
   --azure-file-volume-account-name "${STORAGE_ACCOUNT}" \
   --azure-file-volume-account-key "${STORAGE_KEY}" \
   --azure-file-volume-share-name "${SHARE_NAME}" \
