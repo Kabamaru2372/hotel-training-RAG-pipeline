@@ -14,9 +14,9 @@ MOUNT_PATH="/app/chroma"
 
 FULL_IMAGE="${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}"
 
-# Validate required env vars
-: "${AZURE_OPENAI_ENDPOINT:?AZURE_OPENAI_ENDPOINT is not set}"
-: "${AZURE_OPENAI_KEY:?AZURE_OPENAI_KEY is not set}"
+echo "==> Reading Terraform outputs"
+AZURE_OPENAI_ENDPOINT=$(terraform -chdir=terraform output -raw azure_openai_endpoint)
+AZURE_OPENAI_KEY=$(terraform -chdir=terraform output -raw azure_openai_key)
 
 echo "==> Logging in to ACR: ${ACR_NAME}"
 az acr login --name "${ACR_NAME}"
@@ -53,4 +53,11 @@ az container create \
   --azure-file-volume-share-name "${SHARE_NAME}" \
   --azure-file-volume-mount-path "${MOUNT_PATH}"
 
+echo "==> Fetching container public IP"
+CONTAINER_IP=$(az container show \
+  --resource-group "${RESOURCE_GROUP}" \
+  --name "${CONTAINER_NAME}" \
+  --query ipAddress.ip -o tsv)
+
 echo "==> Done. Container '${CONTAINER_NAME}' deployed."
+echo "Container IP: ${CONTAINER_IP}"

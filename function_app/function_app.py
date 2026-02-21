@@ -3,26 +3,16 @@ import os
 
 import azure.functions as func
 import requests
-from azure.storage.blob import BlobServiceClient
 
 app = func.FunctionApp()
 
 
-@app.event_grid_trigger(arg_name="event")
-def on_upload(event: func.EventGridEvent):
-    data = event.get_json()
-    blob_url: str = data["url"]
-    blob_name = blob_url.split("/")[-1]
+@app.blob_trigger(arg_name="blob", path="hotel-data/{name}", connection="STORAGE_CONN_STR")
+def on_upload(blob: func.InputStream):
+    blob_name = blob.name
+    content = blob.read()
 
     logging.info("Blob uploaded: %s", blob_name)
-
-    blob_service = BlobServiceClient.from_connection_string(os.environ["STORAGE_CONN_STR"])
-    content = (
-        blob_service
-        .get_blob_client("hotel-data", blob_name)
-        .download_blob()
-        .readall()
-    )
 
     rag_url = os.environ["RAG_APP_URL"].rstrip("/")
     response = requests.post(

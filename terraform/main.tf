@@ -1,6 +1,4 @@
 terraform {
-   backend "azurerm" {}
-
    required_providers {
      azurerm = {
        source  = "hashicorp/azurerm"
@@ -110,6 +108,7 @@ resource "azurerm_cognitive_deployment" "embedding" {
 variable "rag_app_url" {
   description = "URL of the deployed RAG app (e.g. https://<container-app>.azurecontainerapps.io)"
   type        = string
+  default     = "http://localhost:8000"
 }
 
 # Separate storage account required by the Functions runtime
@@ -155,30 +154,3 @@ output "function_app_name" {
   value = azurerm_linux_function_app.trigger.name
 }
 
-# ── Event Grid ───────────────────────────────────────────────────────────────
-
-# System topic scoped to the data storage account
-resource "azurerm_eventgrid_system_topic" "blob_topic" {
-  name                   = "hotel-blob-events"
-  resource_group_name    = azurerm_resource_group.rg_rag_pipeline.name
-  location               = azurerm_resource_group.rg_rag_pipeline.location
-  source_arm_resource_id = azurerm_storage_account.main.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
-}
-
-# Route BlobCreated events in hotel-data/ to the Azure Function
-resource "azurerm_eventgrid_system_topic_event_subscription" "blob_to_func" {
-  name                = "hotel-blob-to-func"
-  system_topic        = azurerm_eventgrid_system_topic.blob_topic.name
-  resource_group_name = azurerm_resource_group.rg_rag_pipeline.name
-
-  azure_function_endpoint {
-    function_id = "${azurerm_linux_function_app.trigger.id}/functions/on_upload"
-  }
-
-  included_event_types = ["Microsoft.Storage.BlobCreated"]
-
-  subject_filter {
-    subject_begins_with = "/blobServices/default/containers/hotel-data/"
-  }
-}
