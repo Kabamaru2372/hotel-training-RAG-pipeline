@@ -103,6 +103,24 @@ resource "azurerm_cognitive_deployment" "embedding" {
   }
 }
 
+# ── Application Insights ─────────────────────────────────────────────────────
+
+resource "azurerm_log_analytics_workspace" "main" {
+  name                = "hotel-rag-logs"
+  resource_group_name = azurerm_resource_group.rg_rag_pipeline.name
+  location            = azurerm_resource_group.rg_rag_pipeline.location
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
+resource "azurerm_application_insights" "main" {
+  name                = "hotel-rag-insights"
+  resource_group_name = azurerm_resource_group.rg_rag_pipeline.name
+  location            = azurerm_resource_group.rg_rag_pipeline.location
+  workspace_id        = azurerm_log_analytics_workspace.main.id
+  application_type    = "web"
+}
+
 # ── Azure Function (Event Grid trigger) ─────────────────────────────────────
 
 variable "rag_app_url" {
@@ -144,13 +162,18 @@ resource "azurerm_linux_function_app" "trigger" {
   }
 
   app_settings = {
-    FUNCTIONS_WORKER_RUNTIME = "python"
-    STORAGE_CONN_STR         = azurerm_storage_account.main.primary_connection_string
-    RAG_APP_URL              = var.rag_app_url
+    FUNCTIONS_WORKER_RUNTIME        = "python"
+    STORAGE_CONN_STR                = azurerm_storage_account.main.primary_connection_string
+    RAG_APP_URL                     = var.rag_app_url
+    APPINSIGHTS_INSTRUMENTATIONKEY  = azurerm_application_insights.main.instrumentation_key
   }
 }
 
 output "function_app_name" {
   value = azurerm_linux_function_app.trigger.name
+}
+
+output "rag_app_url" {
+  value = var.rag_app_url
 }
 
