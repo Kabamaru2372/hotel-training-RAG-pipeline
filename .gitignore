@@ -6,3 +6,6 @@
 # Terraform
 terraform/.terraform*
 terraform/terraform*
+
+# Azure Functions local settings (may contain secrets)
+function_app/local.settings.json
