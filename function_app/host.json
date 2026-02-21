@@ -1,6 +1,9 @@
 {
   "version": "2.0",
   "logging": {
+    "logLevel": {
+      "Function.on_upload": "Information"
+    },
     "applicationInsights": {
       "samplingSettings": {
         "isEnabled": true,

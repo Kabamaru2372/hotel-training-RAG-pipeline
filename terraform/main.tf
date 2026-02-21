@@ -165,7 +165,7 @@ resource "azurerm_linux_function_app" "trigger" {
     FUNCTIONS_WORKER_RUNTIME        = "python"
     STORAGE_CONN_STR                = azurerm_storage_account.main.primary_connection_string
     RAG_APP_URL                     = var.rag_app_url
-    APPINSIGHTS_INSTRUMENTATIONKEY  = azurerm_application_insights.main.instrumentation_key
+    APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.main.connection_string
   }
 }
 
