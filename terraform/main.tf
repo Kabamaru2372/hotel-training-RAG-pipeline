@@ -1,23 +1,26 @@
 terraform {
-   required_providers {
-     azurerm = {
-       source  = "hashicorp/azurerm"
-       version = "~> 4.0"
-     }
-   }
-   required_version = ">= 1.1.0"
- }
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 4.0"
+    }
+  }
+  required_version = ">= 1.1.0"
+}
 
- provider "azurerm" {
-   features {}
-   resource_provider_registrations = "none"
- }
+provider "azurerm" {
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
+  resource_provider_registrations = "none"
+}
 
- # Create a Resource Group
- resource "azurerm_resource_group" "rg_rag_pipeline" {
-   name     = "rg-rag-pipeline"
-   location = "westeurope"
- }
+resource "azurerm_resource_group" "rg_rag_pipeline" {
+  name     = "rg-rag-pipeline"
+  location = "westeurope"
+}
 
 resource "azurerm_storage_account" "main" {
   name                     = "hoteltrainingstorage"
@@ -162,9 +165,9 @@ resource "azurerm_linux_function_app" "trigger" {
   }
 
   app_settings = {
-    FUNCTIONS_WORKER_RUNTIME        = "python"
-    STORAGE_CONN_STR                = azurerm_storage_account.main.primary_connection_string
-    RAG_APP_URL                     = var.rag_app_url
+    FUNCTIONS_WORKER_RUNTIME              = "python"
+    STORAGE_CONN_STR                      = azurerm_storage_account.main.primary_connection_string
+    RAG_APP_URL                           = var.rag_app_url
     APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.main.connection_string
   }
 }
