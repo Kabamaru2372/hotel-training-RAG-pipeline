@@ -30,6 +30,13 @@ resource "azurerm_storage_account" "main" {
   account_replication_type = "LRS"
 }
 
+
+resource "azurerm_storage_share" "chroma_share" {
+  name               = "chroma-data"
+  storage_account_id = azurerm_storage_account.main.id
+  quota              = 5 # Size in GB
+}
+
 resource "azurerm_storage_container" "uploads" {
   name               = "hotel-data"
   storage_account_id = azurerm_storage_account.main.id
