@@ -22,3 +22,8 @@ echo "==> Container IP: ${CONTAINER_IP}"
 echo "==> Step 4: Updating terraform with rag_app_url=http://${CONTAINER_IP}:8000"
 terraform -chdir="${SCRIPT_DIR}/terraform" apply -auto-approve \
   -var "rag_app_url=http://${CONTAINER_IP}:8000"
+
+FUNCTION_APP_NAME=$(terraform -chdir="${SCRIPT_DIR}/terraform" output -raw function_app_name)
+
+echo "==> Step 5: Publishing Azure Function to ${FUNCTION_APP_NAME}"
+(cd "${SCRIPT_DIR}/function_app" && func azure functionapp publish "${FUNCTION_APP_NAME}" --python)
