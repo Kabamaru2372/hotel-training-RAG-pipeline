@@ -90,7 +90,7 @@ resource "null_resource" "search_index" {
         "$SEARCH_URL/indexes/rag-index?api-version=2024-07-01" \
         -H "Content-Type: application/json" \
         -H "api-key: $SEARCH_KEY" \
-        -d "{\"name\":\"rag-index\",\"fields\":[{\"name\":\"id\",\"type\":\"Edm.String\",\"key\":true,\"searchable\":false},{\"name\":\"content\",\"type\":\"Edm.String\",\"searchable\":true,\"retrievable\":true},{\"name\":\"metadata_storage_name\",\"type\":\"Edm.String\",\"searchable\":true,\"retrievable\":true}]}"
+        -d "{\"name\":\"rag-index\",\"fields\":[{\"name\":\"id\",\"type\":\"Edm.String\",\"key\":true,\"searchable\":false},{\"name\":\"content\",\"type\":\"Edm.String\",\"searchable\":true,\"retrievable\":true},{\"name\":\"metadata_storage_name\",\"type\":\"Edm.String\",\"searchable\":true,\"retrievable\":true}],\"semantic\":{\"configurations\":[{\"name\":\"rag-semantic-config\",\"prioritizedFields\":{\"prioritizedContentFields\":[{\"fieldName\":\"content\"}],\"prioritizedKeywordsFields\":[],\"titleField\":{\"fieldName\":\"metadata_storage_name\"}}}]}}"
     EOT
   }
 }
@@ -201,7 +201,7 @@ resource "azurerm_cognitive_deployment" "gpt4o" {
 
   sku {
     name     = "GlobalStandard"
-    capacity = 10
+    capacity = 30
   }
 }
 
@@ -355,22 +355,21 @@ resource "azurerm_linux_web_app" "chat" {
     AZURE_OPENAI_TEMPERATURE    = "0.7"
     AZURE_OPENAI_TOP_P          = "0.95"
     AZURE_OPENAI_MAX_TOKENS     = "2000"
-    AZURE_OPENAI_SYSTEM_MESSAGE = "You are an AI assistant that helps hotel staff find information. Only answer questions using the provided documents. If the answer is not found in the documents, say you don't have that information. Do not make up or infer answers beyond what the documents contain."
+    AZURE_OPENAI_SYSTEM_MESSAGE = "You are an AI assistant that helps hotel staff find information. Answer questions based on the provided documents. You may reason, compare, and calculate using data found in the documents. If the documents do not contain relevant information at all, say you don't have that information. Do not fabricate facts that have no basis in the documents."
 
     # ── Azure AI Search ────────────────────────────────────────────────────────
-    # query_type=simple: our index has no semantic configuration, so semantic
-    # search must be off — using it causes a 400 from the OpenAI On Your Data API.
-    DATASOURCE_TYPE                  = "AzureCognitiveSearch"
-    AZURE_SEARCH_SERVICE             = azurerm_search_service.search.name
-    AZURE_SEARCH_KEY                 = azurerm_search_service.search.primary_key
-    AZURE_SEARCH_INDEX               = "rag-index"
-    AZURE_SEARCH_CONTENT_COLUMNS     = "content"
-    AZURE_SEARCH_FILENAME_COLUMN     = "metadata_storage_name"
-    AZURE_SEARCH_QUERY_TYPE          = "simple"
-    AZURE_SEARCH_USE_SEMANTIC_SEARCH = "false"
-    AZURE_SEARCH_TOP_K               = "5"
-    AZURE_SEARCH_STRICTNESS          = "5"
-    AZURE_SEARCH_ENABLE_IN_DOMAIN    = "true"
+    DATASOURCE_TYPE                       = "AzureCognitiveSearch"
+    AZURE_SEARCH_SERVICE                  = azurerm_search_service.search.name
+    AZURE_SEARCH_KEY                      = azurerm_search_service.search.primary_key
+    AZURE_SEARCH_INDEX                    = "rag-index"
+    AZURE_SEARCH_CONTENT_COLUMNS          = "content"
+    AZURE_SEARCH_FILENAME_COLUMN          = "metadata_storage_name"
+    AZURE_SEARCH_QUERY_TYPE               = "semantic"
+    AZURE_SEARCH_USE_SEMANTIC_SEARCH      = "true"
+    AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG   = "rag-semantic-config"
+    AZURE_SEARCH_TOP_K                    = "5"
+    AZURE_SEARCH_STRICTNESS               = "2"
+    AZURE_SEARCH_ENABLE_IN_DOMAIN         = "false"
   }
 
   depends_on = [
