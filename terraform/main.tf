@@ -311,12 +311,36 @@ resource "azurerm_linux_web_app" "chat" {
   location            = azurerm_resource_group.rg_rag_pipeline.location
   service_plan_id     = azurerm_service_plan.chat_plan.id
 
+  identity {
+    type = "SystemAssigned"
+  }
+
   site_config {
     application_stack {
       python_version = "3.11"
     }
     # Default startup command for the sample Flask app
     app_command_line = "gunicorn --bind=0.0.0.0 --timeout 600 app:app"
+  }
+
+  auth_settings_v2 {
+    auth_enabled           = true
+    require_authentication = true
+    unauthenticated_action = "RedirectToLoginPage"
+    default_provider       = "azureactivedirectory"
+    require_https          = true
+
+    active_directory_v2 {
+      client_id            = "55488ec3-1a1e-4324-b046-571a96f125f1"
+      client_secret_setting_name = "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET"
+      tenant_auth_endpoint = "https://sts.windows.net/820cb8a9-42f5-4642-913a-8a00678c4c66/v2.0"
+      allowed_audiences    = ["api://55488ec3-1a1e-4324-b046-571a96f125f1"]
+      allowed_applications = ["55488ec3-1a1e-4324-b046-571a96f125f1"]
+    }
+
+    login {
+      token_store_enabled = true
+    }
   }
 
   app_settings = {
@@ -330,8 +354,8 @@ resource "azurerm_linux_web_app" "chat" {
     AZURE_OPENAI_MODEL_NAME     = azurerm_cognitive_deployment.gpt4o.name
     AZURE_OPENAI_TEMPERATURE    = "0.7"
     AZURE_OPENAI_TOP_P          = "0.95"
-    AZURE_OPENAI_MAX_TOKENS     = "800"
-    AZURE_OPENAI_SYSTEM_MESSAGE = "You are an AI assistant that helps hotel staff find information."
+    AZURE_OPENAI_MAX_TOKENS     = "2000"
+    AZURE_OPENAI_SYSTEM_MESSAGE = "You are an AI assistant that helps hotel staff find information. Only answer questions using the provided documents. If the answer is not found in the documents, say you don't have that information. Do not make up or infer answers beyond what the documents contain."
 
     # ── Azure AI Search ────────────────────────────────────────────────────────
     # query_type=simple: our index has no semantic configuration, so semantic
@@ -345,8 +369,8 @@ resource "azurerm_linux_web_app" "chat" {
     AZURE_SEARCH_QUERY_TYPE          = "simple"
     AZURE_SEARCH_USE_SEMANTIC_SEARCH = "false"
     AZURE_SEARCH_TOP_K               = "5"
-    AZURE_SEARCH_STRICTNESS          = "3"
-    AZURE_SEARCH_ENABLE_IN_DOMAIN    = "false"
+    AZURE_SEARCH_STRICTNESS          = "5"
+    AZURE_SEARCH_ENABLE_IN_DOMAIN    = "true"
   }
 
   depends_on = [
@@ -354,6 +378,18 @@ resource "azurerm_linux_web_app" "chat" {
     azurerm_role_assignment.openai_to_search,
     azurerm_role_assignment.openai_to_storage,
   ]
+}
+
+resource "azurerm_role_assignment" "chat_to_openai" {
+  scope                = azurerm_cognitive_account.openai.id
+  role_definition_name = "Cognitive Services OpenAI User"
+  principal_id         = azurerm_linux_web_app.chat.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "chat_to_search" {
+  scope                = azurerm_search_service.search.id
+  role_definition_name = "Search Index Data Reader"
+  principal_id         = azurerm_linux_web_app.chat.identity[0].principal_id
 }
 
 # Deploy the sample app code from GitHub.
