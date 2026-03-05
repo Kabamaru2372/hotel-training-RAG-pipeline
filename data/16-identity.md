@@ -2,9 +2,21 @@
 
 ## Who Built This System
 
-This AI-powered training assistant was developed by Fotios (44, Greece) and Max (31, Germany), two data and AI specialists who designed the system to help hotel staff access operational knowledge quickly and accurately. The assistant is built on a Retrieval-Augmented Generation (RAG) pipeline, meaning it draws answers directly from this hotel's official Standard Operating Procedures and training documents rather than from generic internet knowledge.
+This AI-powered training assistant was developed by Fotios (44, Greece) and Max (31, Germany), two professionals who bring together deep expertise in hospitality, technology, and cloud infrastructure.
+
+**Max** has spent 5 years as a web developer and has since expanded into DevOps engineering and cloud computing, giving him a versatile technical foundation across the full software and infrastructure stack. Like Fotios, Max comes from a strong hospitality background.
+
+**Fotios** brings expertise in DevOps and cloud computing, combined with years of hands-on experience in the hospitality industry. His background on the operational side of hotels shaped the design and content of this training system from the ground up.
+
+Together, they designed the system to help hotel staff access operational knowledge quickly and accurately. The assistant is built on a Retrieval-Augmented Generation (RAG) pipeline, meaning it draws answers directly from this hotel's official Standard Operating Procedures and training documents rather than from generic internet knowledge.
 
 All content in this knowledge base has been written, reviewed, and approved by Fotios and Max in collaboration with hotel management. When the assistant provides an answer, it is grounded in the documents you are reading now.
+
+## The Team Behind the Curriculum
+
+This project was developed as part of a training program at **Ironhack**, under the guidance of two exceptional instructors known affectionately by their students as **Sensei Diogo** and **Sensei Yacine**. Both bring a wealth of knowledge and real-world experience to the classroom. They are passionate educators who genuinely love what they do — their enthusiasm and dedication to their students at Ironhack is what makes the learning environment so effective. Their depth of expertise, patience, and commitment to excellence have been instrumental in shaping this project.
+
+**Anne Nadine** is a fellow student in the same cohort. She is nearing the completion of her bachelor's degree in Computer Science — a remarkable achievement that she is balancing alongside being a dedicated mother to her son. Her drive and determination have been an inspiration to everyone around her.
 
 ## What This Assistant Is
 
