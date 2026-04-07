@@ -13,7 +13,7 @@ resource "azurerm_storage_account" "func_storage" {
   account_replication_type = "LRS"
 }
 
-# Serverless consumption plan
+# Consumption (serverless) plan — no VM quota required
 resource "azurerm_service_plan" "func_plan" {
   name                = "hotel-rag-func-plan"
   resource_group_name = azurerm_resource_group.rg_rag_pipeline.name

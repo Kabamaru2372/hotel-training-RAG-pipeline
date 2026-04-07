@@ -2,8 +2,9 @@ resource "azurerm_cognitive_account" "openai" {
   name                = "hotel-openai"
   resource_group_name = azurerm_resource_group.rg_rag_pipeline.name
   location            = azurerm_resource_group.rg_rag_pipeline.location
-  kind                = "OpenAI"
-  sku_name            = "S0"
+  kind                  = "OpenAI"
+  sku_name              = "S0"
+  custom_subdomain_name = "hotel-openai-rag"
 
   identity {
     type = "SystemAssigned"

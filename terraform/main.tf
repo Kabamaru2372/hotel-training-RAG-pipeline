@@ -14,7 +14,7 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = false
     }
   }
-  resource_provider_registrations = "none"
+  resource_provider_registrations = "all"
 }
 
 resource "azurerm_resource_group" "rg_rag_pipeline" {

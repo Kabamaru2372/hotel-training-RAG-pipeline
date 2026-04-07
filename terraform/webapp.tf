@@ -48,7 +48,7 @@ resource "azurerm_linux_web_app" "chat" {
     SCM_DO_BUILD_DURING_DEPLOYMENT = "true"
 
     # ── Azure OpenAI ───────────────────────────────────────────────────────────
-    AZURE_OPENAI_RESOURCE       = azurerm_cognitive_account.openai.name
+    AZURE_OPENAI_RESOURCE       = azurerm_cognitive_account.openai.custom_subdomain_name
     AZURE_OPENAI_ENDPOINT       = azurerm_cognitive_account.openai.endpoint
     AZURE_OPENAI_KEY            = azurerm_cognitive_account.openai.primary_access_key
     AZURE_OPENAI_MODEL          = azurerm_cognitive_deployment.gpt4o.name
