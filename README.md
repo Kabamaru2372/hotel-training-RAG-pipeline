@@ -1,6 +1,6 @@
 # Hotel Training RAG Pipeline
 
-> **1st place — Ironhack Hackshow 2025**
+> **1st place — Ironhack Hackshow 2026**
 
 An end-to-end RAG pipeline that lets hotel staff upload training documents and query them through a conversational chat interface — deployed entirely on Azure with a single command.
 
