@@ -1,18 +1,34 @@
 # Hotel Training RAG Pipeline
 
-A Retrieval-Augmented Generation (RAG) pipeline for hotel training documents.
-Staff upload Markdown/PDF training files to Azure Blob Storage; an Azure Function
-ingests them into a ChromaDB vector store; a FastAPI backend serves semantic
-queries; and a hosted chat web app provides a conversational interface over the
-documents.
+> **1st place — Ironhack Hackshow 2025**
+
+An end-to-end RAG pipeline that lets hotel staff upload training documents and query them through a conversational chat interface — deployed entirely on Azure with a single command.
 
 ```
- ./data/  ──upload.sh──►  Blob Storage  ──Function──►  RAG backend (ACI)
-                                │                           │
-                          AI Search index  ◄───────────────┘
+./data/  ──upload.sh──►  Blob Storage  ──Azure Function──►  RAG Backend (ACI)
+                                │                                    │
+                          AI Search Index  ◄─────────────────────────┘
                                 │
-                          Chat web app  ◄──── users
+                          Chat Web App  ◄──── hotel staff
 ```
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Infrastructure | Terraform, Azure Resource Manager |
+| Compute | Azure Container Instances, Azure Functions (Python 3.11) |
+| AI | Azure OpenAI (GPT-4o + text-embedding-3-small), ChromaDB |
+| Search | Azure AI Search (hourly indexed, blob-triggered) |
+| Security | System-assigned Managed Identities, RBAC role assignments |
+| Observability | Application Insights, Log Analytics (30-day retention) |
+| Deployment | Single-script (`./local-pipeline.sh`), fully idempotent |
+
+## Key Design Decisions
+
+- **No hardcoded credentials** — all services authenticate via managed identities and RBAC; zero secrets in code
+- **Idempotent deployment** — re-running `./local-pipeline.sh` is always safe; Terraform handles drift and imports pre-existing resources
+- **Search data plane via REST** — `azapi` provider cannot authenticate to the AI Search data plane with ambient Azure AD credentials; datasource, index, and indexer are provisioned via `curl` with the admin key (see [Troubleshooting](#azapi_data_plane_resource-hangs-for-10-minutes))
 
 ---
 
@@ -43,8 +59,7 @@ Everything is driven by a single script:
 ./local-pipeline.sh
 ```
 
-That's it. The script is safe to re-run — Terraform is idempotent and the
-container/function deploys are replaced in-place.
+The script is safe to re-run — Terraform is idempotent and the container/function deploys are replaced in-place.
 
 ### What the script does
 
@@ -53,7 +68,7 @@ container/function deploys are replaced in-place.
 | **1 – Provision (first pass)** | `terraform init` + `terraform apply` creates all Azure resources. If the `hotel-ai` web app already exists outside Terraform (e.g. a previous Foundry Studio deploy), it is automatically imported so Terraform adopts it. |
 | **2 – Build & deploy container** | `deploy.sh` builds the Docker image, pushes it to ACR, and creates the ACI container. |
 | **3 – Get container IP** | Queries ACI for the public IP of the running `hotel-rag` container. |
-| **4 – Provision (second pass)** | Re-runs `terraform apply -var "rag_app_url=http://<ip>:8000"` — this wires the real container URL into the Function App and triggers the chat web app code deployment. |
+| **4 – Provision (second pass)** | Re-runs `terraform apply -var "rag_app_url=http://<ip>:8000"` — wires the real container URL into the Function App and triggers chat web app deployment. |
 | **5 – Publish Function** | `func azure functionapp publish` pushes the local `function_app/` code to `hotel-rag-trigger`. |
 
 At the end the script prints the RAG backend URL and the chat web app URL.
@@ -97,9 +112,7 @@ At the end the script prints the RAG backend URL and the chat web app URL.
 
 ### Search data plane resources (provisioned via `curl`)
 
-The `azapi` provider cannot authenticate to the AI Search **data plane** with
-the ambient Azure AD credential, so these three resources are created with
-direct REST calls using the Search admin key:
+The `azapi` provider cannot authenticate to the AI Search **data plane** with the ambient Azure AD credential, so these three resources are created with direct REST calls using the Search admin key:
 
 | Resource | Name |
 |----------|------|
@@ -109,8 +122,7 @@ direct REST calls using the Search admin key:
 
 ### Chat web app settings
 
-All settings are wired directly from Terraform outputs — no manual
-configuration in the portal is needed. Key values:
+All settings are wired directly from Terraform outputs — no manual configuration in the portal needed.
 
 | Setting | Value |
 |---------|-------|
@@ -123,8 +135,7 @@ configuration in the portal is needed. Key values:
 
 > **Why `query_type=simple` and semantic search off?**
 > The `rag-index` has no semantic configuration. Sending `query_type=semantic`
-> causes Azure OpenAI's On Your Data API to return a 400 Bad Request when it
-> tries to forward the semantic search request to AI Search.
+> causes Azure OpenAI's On Your Data API to return 400 Bad Request.
 
 ---
 
@@ -138,8 +149,7 @@ configuration in the portal is needed. Key values:
 ./upload.sh 01-checkin-checkout-procedures.md
 ```
 
-`upload.sh` prompts before overwriting an existing blob. After upload the
-indexer runs on its hourly schedule. To trigger it immediately:
+`upload.sh` prompts before overwriting an existing blob. After upload the indexer runs on its hourly schedule. To trigger it immediately:
 
 ```bash
 az search indexer run \
@@ -151,8 +161,6 @@ az search indexer run \
 ---
 
 ## Running Terraform independently
-
-If infrastructure is already provisioned and you only need to update it:
 
 ```bash
 cd terraform
@@ -173,8 +181,7 @@ cd terraform
 terraform destroy
 ```
 
-This deletes the resource group and everything inside it. The next run of
-`./local-pipeline.sh` will recreate everything from scratch.
+Deletes the resource group and everything inside it. The next run of `./local-pipeline.sh` recreates everything from scratch.
 
 ---
 
@@ -184,13 +191,9 @@ This deletes the resource group and everything inside it. The next run of
 
 **Where:** Foundry Studio chat or the `hotel-ai` web app at query time.
 
-**Cause:** The Azure OpenAI service had no system-assigned managed identity.
-When the chat tries to authenticate to AI Search using managed identity, the
-principal ID is null — serialised as `NA` — and Azure rejects the resource ID.
+**Cause:** The Azure OpenAI service had no system-assigned managed identity. When the chat authenticates to AI Search via managed identity, the principal ID is null — serialised as `NA` — and Azure rejects the resource ID.
 
-**Fix (already applied):** `identity { type = "SystemAssigned" }` is now on
-`azurerm_cognitive_account.openai`, and the two RBAC role assignments above
-grant it access to the search service and storage account.
+**Fix (already applied):** `identity { type = "SystemAssigned" }` is now on `azurerm_cognitive_account.openai`, and the two RBAC role assignments grant it access to the search service and storage account.
 
 ---
 
@@ -199,25 +202,16 @@ grant it access to the search service and storage account.
 **Where:** `hotel-ai` App Service logs, in `send_chat_request`.
 
 **Cause:** Multiple misconfigured app settings:
-- `AZURE_OPENAI_KEY` and `AZURE_SEARCH_KEY` were empty (Foundry Studio does not
-  populate these when it creates the web app).
-- `AZURE_SEARCH_QUERY_TYPE=semantic` with `AZURE_SEARCH_USE_SEMANTIC_SEARCH=true`
-  — the index has no semantic configuration, so the On Your Data API rejected
-  the request.
-- `AZURE_SEARCH_CONTENT_COLUMNS` was empty — the app did not know which index
-  field contained the document text.
+- `AZURE_OPENAI_KEY` and `AZURE_SEARCH_KEY` were empty (Foundry Studio does not populate these when it creates the web app)
+- `AZURE_SEARCH_QUERY_TYPE=semantic` with `AZURE_SEARCH_USE_SEMANTIC_SEARCH=true` — the index has no semantic configuration
+- `AZURE_SEARCH_CONTENT_COLUMNS` was empty
 
-**Fix (already applied):** All settings are now set directly in
-`azurerm_linux_web_app.chat` from Terraform outputs, so they are always correct
-on a fresh deploy.
+**Fix (already applied):** All settings are now set directly in `azurerm_linux_web_app.chat` from Terraform outputs.
 
 ---
 
 ### `azapi_data_plane_resource` hangs for 10+ minutes
 
-**Cause:** The `azapi` provider uses Azure AD tokens for data plane access, but
-the AI Search data plane requires either an API key or a specific RBAC
-configuration that conflicts with the ambient credential.
+**Cause:** The `azapi` provider uses Azure AD tokens for data plane access, but the AI Search data plane requires either an API key or a specific RBAC configuration that conflicts with the ambient credential.
 
-**Fix (already applied):** The search datasource, index, and indexer are
-created with `null_resource` + `curl` using the Search admin key instead.
+**Fix (already applied):** The search datasource, index, and indexer are created with `null_resource` + `curl` using the Search admin key instead.
