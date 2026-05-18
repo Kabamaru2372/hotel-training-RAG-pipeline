@@ -4,6 +4,8 @@
 
 An end-to-end RAG pipeline that lets hotel staff upload training documents and query them through a conversational chat interface — deployed entirely on Azure with a single command.
 
+![Demo](demo.gif)
+
 ```
 ./data/  ──upload.sh──►  Blob Storage  ──Azure Function──►  RAG Backend (ACI)
                                 │                                    │
