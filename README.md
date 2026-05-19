@@ -21,7 +21,7 @@ An end-to-end RAG pipeline that lets hotel staff upload training documents and q
 | Infrastructure | Terraform, Azure Resource Manager |
 | Compute | Azure Container Instances, Azure Functions (Python 3.11) |
 | AI | Azure OpenAI (GPT-4o + text-embedding-3-small), ChromaDB |
-| Search | Azure AI Search (hourly indexed, blob-triggered) |
+| Search | Azure AI Search (instantly indexed(uppon new document upload), blob-triggered) |
 | Security | System-assigned Managed Identities, RBAC role assignments |
 | Observability | Application Insights, Log Analytics (30-day retention) |
 | Deployment | Single-script (`./local-pipeline.sh`), fully idempotent |
